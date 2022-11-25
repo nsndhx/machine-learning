@@ -1,0 +1,77 @@
+# coding=utf-8
+import numpy as np
+
+def loss(y,y_proba):
+    m = 10
+    sum_cost = 0.0
+    for i in range(y.shape[0]):
+        for j in range(y.shape[1]):
+            if y[i,j] == 1:
+                sum_cost -= np.log(y_proba[i,j])
+    return sum_cost / m
+    #for i in range(m):
+    #    print(y[i,y_proba[i,0]],np.sum(y[i,:]),y[i,y_proba[i,0]] / np.sum(y[i,:]))
+    #    if y[i,y_proba[i,0]] / np.sum(y[i,:]) > 0:
+    #        sum_cost -= np.log(y[i,label_data[i,0]] / np.sum(y[i,:]))
+    #    else:
+    #        sum_cost -= 0
+    #return sum_cost / m
+
+def softmax(z):
+    E=np.exp(z)
+    print("E:",E)
+    if z.ndim == 1:  # 维度为1，则直接类似于归一化的操作
+        return E / np.sum(E)  # 归一化
+    return E / np.sum(E, axis=1, keepdims=True)  # 保持维度的，同行相加 ->对应所有种类的值求sum
+
+def predict_proba(x,w):
+    if x.ndim == 1:
+        z = np.dot(w, x)   # 如果维度是一维的，就同书中公式那样进行乘积
+    else:
+        z = np.matmul(x,w.T)
+    print("z:",z)
+    return softmax(z)
+
+def gradient(xi,yi,yi_proba):
+    K = yi_proba.size
+    y_bin = np.zeros(K)
+    yi = yi.astype('int64')
+    y_bin[yi] = 1
+    return (yi_proba - y_bin)[:, None] * xi
+
+def softmax_regression(theta, x, y, iters, alpha):
+    # TODO: Do the softmax regression by computing the gradient and 
+    # the objective function value of every iteration and update the theta
+
+    #theta: k*n矩阵  x：m*n矩阵   y：k*m矩阵
+    #theta---w    x---x   y---y
+    #k——m   m——n   n——K
+    #g(x)=x[k,m]*theta[m,n]=np.matmul(x,theta.T)
+    
+    m = y.shape[0]
+    y = y.T
+    print("m:",m)
+    idx = np.arange(m)
+    print("idx:",idx)
+    #循环
+    for step_i in range(iters):
+        #计算损失值，存储在f中
+        print("x:",x)
+        print("theta:",theta)
+        y_proba = predict_proba(x,theta)
+        print("y_broba:",y_proba)
+        f = loss(y,y_proba)
+        print('%4i Loss: %s' % (step_i, f))
+        np.random.shuffle(idx)
+        print(idx)
+        for i in idx:
+            yi_proba = predict_proba(x[i],theta)
+            print("yi_proba:",yi_proba)
+            #计算梯度，存储在g中
+            g = gradient(x[i], y[i], yi_proba)
+            print("g:",g)
+            #更新参数theta
+            theta -= alpha * g
+    
+    return theta
+    
